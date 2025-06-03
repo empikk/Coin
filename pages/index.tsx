@@ -1,28 +1,27 @@
+// pages/index.tsx
+import { useState } from 'react';
+import FarcasterLogin from '@/components/FarcasterLogin';
+import { checkAndResetTickets, consumeTicket } from '@/lib/supabaseService';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import { getTickets, useTicket } from '@/lib/ticketManager';
 
-export default function Home() {
+export default function HomePage() {
+  const [fid, setFid] = useState<number | null>(null);
   const router = useRouter();
-  const [tickets, setTickets] = useState(5);
 
-  useEffect(() => {
-    setTickets(getTickets());
-  }, []);
+  const handleStart = async () => {
+    if (!fid) return;
 
-  const startGame = () => {
-    if (useTicket()) {
-      router.push('/game');
-    } else {
-      alert('Tiket habis! Coba lagi besok.');
-    }
+    await checkAndResetTickets(fid);
+    const allowed = await consumeTicket(fid);
+    if (allowed) router.push(`/game?fid=${fid}`);
+    else alert('Tiket habis!');
   };
 
   return (
     <div>
-      <h1>Selamat datang di Coin Catcher!</h1>
-      <p>Tiket tersisa: {tickets}</p>
-      <button onClick={startGame}>Mainkan Game</button>
+      <h1>Coin Catcher</h1>
+      <FarcasterLogin onLogin={setFid} />
+      {fid && <button onClick={handleStart}>Main</button>}
     </div>
   );
 }
